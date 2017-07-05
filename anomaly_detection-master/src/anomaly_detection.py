@@ -12,18 +12,18 @@ def find_friends(Graph,start,num):
     q1.append(start)
     result=[]
     visited=[]
-    num = min(len(Graph),num)
+    #num = min(len(Graph),num)
     for current_level in range(1,num):
         while q1:
             u=q1.pop()#remove the vertex from queueTobeEmptied and call it as u
-            for (u,v) in Graph:
+            for v in Graph[u]:
                 if v not in visited:
                     visited.append(v)
                     q2.append(v)    
                     result.append(v)                       
         q1,q2 = q2,q1        #swap the queues now for next iteration of for loop
 
-    #print (visited)
+    
     return visited
 
 # the function to generate all edges from social network graph
@@ -84,6 +84,7 @@ def generateGraph(inputTweets,inputTweets1):
     social_graph = {}
     purchase_list =[]
     
+    
     for t in inputTweets:
         t = json.loads(t)
         if "D" in t and "T" in t:
@@ -91,9 +92,11 @@ def generateGraph(inputTweets,inputTweets1):
             T = int(t["T"])
         if "event_type" in t:
         # keep record of the purchase history and store it as a list of tuples.
-            if t["event_type"]=="purchase":
+              
+            if t["event_type"]=="purchase":   
                 purchase_list.append((t["id"],t["timestamp"],float(t["amount"])))
-        # add to social graph with event_type befriend                                 
+        # add to social graph with event_type befriend
+                  
             if t["event_type"]=="befriend":
                 addEdges = getHashTagLinks((t["id1"],t["id2"]))
                 for edge in addEdges:
@@ -116,11 +119,12 @@ def generateGraph(inputTweets,inputTweets1):
         t = json.loads(t)
         
         
+        
         # keep record of the purchase history and store it as a list of tuples.
         if t["event_type"]=="purchase":
             edges = generate_edges(social_graph)                                
-            mean = compute_mean(purchase_list,find_friends(edges,t['id'],int(T)),int(T))[1]
-            amount_list = compute_mean(purchase_list,find_friends(edges,t['id'],int(T)),int(D))[0]
+            mean = compute_mean(purchase_list,find_friends(social_graph,t['id'],int(D)),int(T))[1]
+            amount_list = compute_mean(purchase_list,find_friends(social_graph,t['id'],int(D)),int(T))[0]
             sd = compute_sd(mean, amount_list)                
             detection = check_anomaly(t,mean,sd)
             f = open('flagged_purchases.json', 'w') # open for 'w'riting
