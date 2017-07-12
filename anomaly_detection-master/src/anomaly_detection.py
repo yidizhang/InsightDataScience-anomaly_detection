@@ -57,8 +57,8 @@ def compute_sd(mean,amount_list):
 def check_anomaly(event,mean, sd):
     if float(event['amount']) > mean + 3*sd:
         event.update({'mean': format(mean,'.2f')})
-        event.update({'sd': format(sd,'.2f')})                           
-    return event    
+        event.update({'sd': format(sd,'.2f')})
+    return event 
             
 
 def printUsage():
@@ -69,6 +69,7 @@ def printUsage():
 def generateGraph(inputTweets,inputTweets1):
     social_graph = {}
     purchase_list =[]
+    update_anomaly = []
     
     
     for t in inputTweets:
@@ -100,11 +101,20 @@ def generateGraph(inputTweets,inputTweets1):
                         social_graph[t["id2"]].remove(t["id1"])
                     if t["id2"] in social_graph[t["id1"]]:
                         social_graph[t["id1"]].remove(t["id2"])
-               
+    c=0
+    c += 1
 #begin reading stream_log.json file
     for t in inputTweets1:
+        '''
+        try:
+            t = json.loads(t)
+        except:
+            print("t was:")
+            print(repr(t))
+            raise
+        '''
         t = json.loads(t)
-        
+        #print (t)
         
         
         # keep record of the purchase history and store it as a list of tuples.
@@ -113,15 +123,21 @@ def generateGraph(inputTweets,inputTweets1):
             mean = compute_mean(purchase_list,find_friends(social_graph,t['id'],int(D)),int(T))[1]
             amount_list = compute_mean(purchase_list,find_friends(social_graph,t['id'],int(D)),int(T))[0]
             sd = compute_sd(mean, amount_list)
-            print ("sd is :", sd)
+            #print ("sd is :", sd)
             detection = check_anomaly(t,mean,sd)
+            #print (str(detection))
+            update_anomaly.append(detection)
+            '''
             f = open('flagged_purchases.json', 'w') # open for 'w'riting
             f.write(str(detection))
-            purchase_list.append((t["id"],t["timestamp"],t["amount"]))                   
+            '''
+            
+            purchase_list.append((t["id"],t["timestamp"],t["amount"]))
+            
         
         # add to social graph with event_type befriend
                   
-            if t["event_type"]=="befriend":
+        if t["event_type"]=="befriend":
                 if t["id1"] in social_graph:
                     social_graph[t["id1"]].append(t["id2"])
                 else:
@@ -132,13 +148,14 @@ def generateGraph(inputTweets,inputTweets1):
                     social_graph[t["id2"]]= [t["id1"]]
                                              
         # remove from social graph with event_tpye unfriend
-            if t["event_type"]=="unfriend":
+        if t["event_type"]=="unfriend":
                 if t["id1"] in social_graph and t["id2"] in social_graph:
                     if t["id1"] in social_graph[t["id2"]]:
                         social_graph[t["id2"]].remove(t["id1"])
                     if t["id2"] in social_graph[t["id1"]]:
-                        social_graph[t["id1"]].remove(t["id2"])                                      
-
+                        social_graph[t["id1"]].remove(t["id2"])
+        if t == '\n': return
+    return update_anomaly   
 def main(argv):
     
     if len(argv) < 2 :
@@ -154,12 +171,28 @@ def main(argv):
     #Read Input File and save all input tweets in memory
     with open(inputTweetsFile,"r") as fIn :
         inputTweets = fIn.readlines()
-
     with open(inputTweetsFile1,"r") as fIn :
         inputTweets1 = fIn.readlines()
-
+        inputTweets1 = inputTweets1[:-1]
+        
+        #print (InputTweets1)
+        
+    '''
+    with open(inputTweetsFile1,"r") as fIn :
+        inputTweets1 = fIn.readlines()
+        inputTweets1 = inputTweets1[:-1]
+        InputTweets1 = [line for line in inputTweets1 if line.strip()]
+    '''
     #process events
-    generateGraph(inputTweets, inputTweets1)   
+    output = generateGraph(inputTweets, inputTweets1)
+
+    #Clean the Output File if it already exists
+    open(outputTweetsFile, 'w').close()
+
+    #Save anomaly for incoming events
+    with open(outputTweetsFile,"w") as fOut:
+        for event  in output:
+            fOut.write(str(event) + "\n")
 
 
 
