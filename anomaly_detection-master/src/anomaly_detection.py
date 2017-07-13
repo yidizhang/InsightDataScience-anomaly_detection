@@ -58,7 +58,9 @@ def check_anomaly(event,mean, sd):
     if float(event['amount']) > mean + 3*sd:
         event.update({'mean': format(mean,'.2f')})
         event.update({'sd': format(sd,'.2f')})
-    return event 
+        return event
+    else:
+        return 
             
 
 def printUsage():
@@ -127,11 +129,6 @@ def generateGraph(inputTweets,inputTweets1):
             detection = check_anomaly(t,mean,sd)
             #print (str(detection))
             update_anomaly.append(detection)
-            '''
-            f = open('flagged_purchases.json', 'w') # open for 'w'riting
-            f.write(str(detection))
-            '''
-            
             purchase_list.append((t["id"],t["timestamp"],t["amount"]))
             
         
@@ -175,21 +172,13 @@ def main(argv):
         inputTweets1 = fIn.readlines()
         inputTweets1 = inputTweets1[:-1]
         
-        #print (InputTweets1)
-        
-    '''
-    with open(inputTweetsFile1,"r") as fIn :
-        inputTweets1 = fIn.readlines()
-        inputTweets1 = inputTweets1[:-1]
-        InputTweets1 = [line for line in inputTweets1 if line.strip()]
-    '''
-    #process events
+    #process events and store the anomaly events
     output = generateGraph(inputTweets, inputTweets1)
 
     #Clean the Output File if it already exists
     open(outputTweetsFile, 'w').close()
 
-    #Save anomaly for incoming events
+    #write incoming events in output file
     with open(outputTweetsFile,"w") as fOut:
         for event  in output:
             fOut.write(str(event) + "\n")
