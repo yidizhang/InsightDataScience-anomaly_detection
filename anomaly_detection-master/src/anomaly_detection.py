@@ -11,7 +11,6 @@ def find_friends(Graph,start,num):
     q1.append(start)
     result=[]
     visited=[]
-    #num = min(len(Graph),num)
     for current_level in range(1,num):
         while q1:
             u=q1.pop()#remove the vertex from queueTobeEmptied and call it as u
@@ -27,7 +26,6 @@ def find_friends(Graph,start,num):
 
 # the function to compute mean of last T purchases within D-th degree social network
 def compute_mean(purchase_history,find_friends, T):
-    #friends_purchase=[]
     amount_list=[]
 
     for i, list in enumerate(purchase_history):
@@ -64,7 +62,7 @@ def check_anomaly(event,mean, sd):
             
 
 def printUsage():
-    print ("Usage: python average_degree.py <input_file1> <input_file2> <output_file>")  # output_file here is always flagged_purchase.json
+    print ("Usage: python average_degree.py <input_file1> <input_file2> <output_file>")  # provide instructions for command line execution
            
 # the function to read batch_log file to generate initial social graph and purchase history, then it reads stream_log file to find anomaly and flag the event in output file
 # the social graph and purchase history is also updated. 
@@ -103,31 +101,17 @@ def generateGraph(inputTweets,inputTweets1):
                         social_graph[t["id2"]].remove(t["id1"])
                     if t["id2"] in social_graph[t["id1"]]:
                         social_graph[t["id1"]].remove(t["id2"])
-    c=0
-    c += 1
+    
 #begin reading stream_log.json file
     for t in inputTweets1:
-        '''
-        try:
-            t = json.loads(t)
-        except:
-            print("t was:")
-            print(repr(t))
-            raise
-        '''
         t = json.loads(t)
-        #print (t)
-        
-        
         # keep record of the purchase history and store it as a list of tuples.
         if t["event_type"]=="purchase":
                                             
             mean = compute_mean(purchase_list,find_friends(social_graph,t['id'],int(D)),int(T))[1]
             amount_list = compute_mean(purchase_list,find_friends(social_graph,t['id'],int(D)),int(T))[0]
             sd = compute_sd(mean, amount_list)
-            #print ("sd is :", sd)
             detection = check_anomaly(t,mean,sd)
-            #print (str(detection))
             update_anomaly.append(detection)
             purchase_list.append((t["id"],t["timestamp"],t["amount"]))
             
@@ -151,7 +135,6 @@ def generateGraph(inputTweets,inputTweets1):
                         social_graph[t["id2"]].remove(t["id1"])
                     if t["id2"] in social_graph[t["id1"]]:
                         social_graph[t["id1"]].remove(t["id2"])
-        if t == '\n': return
     return update_anomaly   
 def main(argv):
     
